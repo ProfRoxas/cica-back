@@ -1,12 +1,20 @@
-import express, { Express, Request, Response } from 'express';
+import express, { Request, Response } from 'express';
 import { AppDataSource } from "./data-source"
 
 import { usersRouter } from './routers/users';
 import { authRouter } from './routers/auth';
+import { issuesRouter } from './routers/issues';
+import { authenticateToken } from './utilities';
+
+import cors from 'cors'
+
+const PORT = process.env.PORT || 4000
 
 const app = express()
-const port = 4000
 app.use(express.json())
+app.use(cors())
+app.use('/users', authenticateToken)
+app.use('/issues', authenticateToken)
 
 AppDataSource
     .initialize()
@@ -22,5 +30,6 @@ app.get('/', async (req: Request, res: Response) => {
 })
 app.use('/users', usersRouter)
 app.use('/auth', authRouter)
+app.use('/issues', issuesRouter)
 
-app.listen(port)
+app.listen(PORT)
