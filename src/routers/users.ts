@@ -18,8 +18,16 @@ usersRouter.get('/', async (req: Request, res: Response) => {
         'user.privilege',
         'user.createdAt'
     ]).leftJoinAndSelect('user.issues', 'issues')
+    const {username, email, limit, offset} = req.body
+    if (email === null){
+        query.andWhere('user.email is NULL')
+    }
+    if (username || email || limit || offset) {
+        query.take(limit || 10).skip(offset || 0)
+        if (username) query.andWhere('user.username = :username', {username: username})
+        if (email) query.andWhere('user.email = :email', {email: email})
+    }
     const users = await query.getMany()
-    console.log(users)
     res.json({
         count: users.length,
         results: users
@@ -62,7 +70,7 @@ usersRouter.patch('/:id', async (req: Request, res: Response) => {
             
             await AppDataSource.getRepository(User).save(user)
         }
-        else(console.log('Nothing to update'))
+        
         res.status(200).json({
             id: user.id,
             username: user.username,
@@ -87,7 +95,6 @@ usersRouter.delete('/:id', async (req: Request, res: Response) => {
             res.status(403).json({message: `Failed the username challenge`})
             return
         }
-        console.log(user)
         await AppDataSource.getRepository(User).remove(user)
         res.status(201).json({})
     }
