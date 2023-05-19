@@ -5,6 +5,7 @@ import { AppDataSource } from "../data-source";
 import { User } from "../entity/User"
 import { Issue } from '../entity/Issue';
 import { hashPassword, isAdmin } from '../utilities';
+import Privileges from '../consts/privileges';
 
 const usersRouter = express.Router()
 
@@ -33,7 +34,7 @@ usersRouter.get('/', async (req: Request, res: Response) => {
         results: users
     });
 });
-usersRouter.get('/:id', async (req: Request, res: Response) => {
+usersRouter.route('/:id').get(async (req: Request, res: Response) => {
     const result = await AppDataSource.getRepository(User)
     .createQueryBuilder('user')
     .select([
@@ -49,8 +50,7 @@ usersRouter.get('/:id', async (req: Request, res: Response) => {
     } else {
         res.status(404).json({message: `User with ID ${req.body.id} not found`})
     }
-});
-usersRouter.patch('/:id', async (req: Request, res: Response) => {
+}).patch(async (req: Request, res: Response) => {
     const user = await AppDataSource.getRepository(User).findOneBy({id: Number.parseInt(req.params.id)})
     if (!user) {
         res.status(404).json({message: `User with ID ${req.body.id} not found`})
@@ -58,19 +58,32 @@ usersRouter.patch('/:id', async (req: Request, res: Response) => {
     }
     const loginUser: User = res.locals.user
     if (isAdmin(loginUser) || loginUser.id == user.id) {
-        const email = req.body.email
-        const password = req.body.password
+        const {email, password, privileges} = req.body
         if (email) {
             user.email = email
         }
         if (password) {
             user.password = hashPassword(password)
         }
-        if (email || password) {
-            
+        if (privileges && isAdmin(loginUser)) {
+            const privilege_obj = Privileges[privileges.toUpperCase()]
+            // owner can set anyone's
+            // admin can only give to users
+            if (loginUser.privilege === Privileges.OWNER && user.privilege !== Privileges.OWNER) {
+                if( loginUser.id != user.id) user.privilege = privilege_obj
+            }
+            else {
+                if (privilege_obj !== Privileges.OWNER){
+                    if (loginUser.privilege === privileges.ADMIN && user.privilege === Privileges.USER) {
+                        user.privilege = privilege_obj
+                    }
+                }
+            }
+        }
+        if (email || password || privileges) {
             await AppDataSource.getRepository(User).save(user)
         }
-        
+
         res.status(200).json({
             id: user.id,
             username: user.username,
@@ -82,8 +95,7 @@ usersRouter.patch('/:id', async (req: Request, res: Response) => {
     else {
         res.status(403).json({message: 'Not enough privileges'})
     }
-})
-usersRouter.delete('/:id', async (req: Request, res: Response) => {
+}).delete(async (req: Request, res: Response) => {
     const user = await AppDataSource.getRepository(User).findOneBy({id: Number.parseInt(req.params.id)})
     if (!user) {
         res.status(404).json({message: `User with ID ${req.body.id} not found`})

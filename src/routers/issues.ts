@@ -11,7 +11,7 @@ issuesRouter.get('/', async (req: Request, res: Response) => {
     const {name, user, state, limit, offset} = req.body
     const users = await AppDataSource.getRepository(Issue).find()
     res.json({count: users.length, results: users});
-});
+})
 issuesRouter.get('/:id', async (req: Request, res: Response) => {
     const result = await AppDataSource.getRepository(Issue).findOneBy({
         id: Number.parseInt(req.params.id),
@@ -19,7 +19,7 @@ issuesRouter.get('/:id', async (req: Request, res: Response) => {
     if (result) {
         res.send(result);
     } else {
-        res.status(404).json({message: 'User not found'})
+        res.status(404).json({message: 'Issue not found'})
     }
 });
 
