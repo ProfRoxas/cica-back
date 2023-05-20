@@ -13,6 +13,10 @@ const PORT = process.env.PORT || 4000
 const app = express()
 app.use(express.json())
 app.use(cors())
+app.use(async (req: Request, res: Response, next) => {
+    console.log(`${Date()}: ${req.method} on ${req.path}`)
+    next()
+})
 app.use('/users', authenticateToken)
 app.use('/issues', authenticateToken)
 

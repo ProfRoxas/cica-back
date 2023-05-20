@@ -16,7 +16,6 @@ issuesRouter.route('/').get(async (req: Request, res: Response) => {
     if (user === null){
         query.andWhere('issue.owner is NULL')
     }
-    console.log(req.body)
     if (user || name || state || limit || offset) {
         query.take(limit || 10).skip(offset || 0)
         if (user) query.andWhere('issue.owner.id = :owner', {owner: user})
@@ -30,7 +29,6 @@ issuesRouter.route('/').get(async (req: Request, res: Response) => {
     res.json({count: issues.length, results: issues});
 }).post(async (req: Request, res: Response) => {
     const {name, description, user} = req.body
-    console.log(name)
     if (!name) {
         res.status(400).json({message: 'Missing requires parameter: name'})
     } else {
