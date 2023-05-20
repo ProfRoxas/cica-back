@@ -4,6 +4,7 @@ import { AppDataSource } from "../data-source";
 
 import { Issue } from '../entity/Issue';
 import IssueStates from '../consts/issuestates';
+import { User } from '../entity/User';
 
 const issuesRouter = express.Router()
 
@@ -33,7 +34,10 @@ issuesRouter.route('/').get(async (req: Request, res: Response) => {
     if (!name) {
         res.status(400).json({message: 'Missing requires parameter: name'})
     } else {
-        const issue = await AppDataSource.getRepository(Issue).create({name, description, owner: user})
+        const owner = await AppDataSource.getRepository(User)
+            .createQueryBuilder('user').select(['user.id', 'user.username', 'user.email'])
+            .where({id: user}).getOne()
+        const issue = await AppDataSource.getRepository(Issue).create({name, description, owner: owner})
         const result = await AppDataSource.getRepository(Issue).save(issue)
         res.status(201).json(result)
     }
@@ -44,7 +48,6 @@ issuesRouter.param('id', async (req: Request, res: Response, next, id:string) =>
         .addSelect(['owner.id', 'owner.username', 'owner.email'])
         .where('issue.id = :id', {id: id})
         .getOne()
-    console.log(result.owner)
     if (!result) {
         res.status(404).json({message: 'Issue not found'})
     } else {
@@ -53,9 +56,32 @@ issuesRouter.param('id', async (req: Request, res: Response, next, id:string) =>
     }
 }).route('/:id').get(async (req: Request, res: Response) => {
     res.status(200).json(res.locals.issue)
-}).post(async (req: Request, res:Response) => {
+}).patch(async (req: Request, res:Response) => {
+    const {name, description, state, user} = req.body
+    const issue: Issue = res.locals.issue
 
-    res.status(404).json({message: 'Issue not found'})
+    if (name) issue.name = name
+    if (description) issue.description = description
+    if (state){
+        const stateObj = IssueStates[state.toUpperCase()]
+        if (stateObj) issue.state = stateObj
+    }
+    if (user) {
+        const newOwner = await AppDataSource.getRepository(User)
+            .createQueryBuilder('user').select(['user.id', 'user.username', 'user.email'])
+            .where({id: user}).getOne()
+        if (newOwner) issue.owner = newOwner
+    }
+    if (user === null) issue.owner = user
+
+    if (name || description || state || user !== undefined) {
+        const result = await AppDataSource.getRepository(Issue).save(issue)
+        res.status(200).json(result)
+    } else res.status(200).json(issue)
+}).delete(async (req: Request, res: Response) => {
+    const issue: Issue = res.locals.issue
+    const result = await AppDataSource.getRepository(Issue).remove(issue)
+    res.status(204).json({})
 })
 
 export {issuesRouter}
