@@ -4,7 +4,6 @@ import { AppDataSource } from "../data-source";
 
 import { User } from "../entity/User"
 import { Issue } from '../entity/Issue';
-import { nextTick } from 'process';
 
 const issuesRouter = express.Router()
 
@@ -27,7 +26,7 @@ issuesRouter.param('id', async (req: Request, res: Response, next, id:string) =>
         next()
     }
 }).route('/:id').get(async (req: Request, res: Response) => {
-    
+    res.status(200).json(res.locals.issue)
 }).post(async (req: Request, res:Response) => {
 
     res.status(404).json({message: 'Issue not found'})

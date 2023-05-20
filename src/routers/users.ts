@@ -3,7 +3,6 @@ import express, { Request, Response } from 'express';
 import { AppDataSource } from "../data-source";
 
 import { User } from "../entity/User"
-import { Issue } from '../entity/Issue';
 import { hashPassword, isAdmin } from '../utilities';
 import Privileges from '../consts/privileges';
 
