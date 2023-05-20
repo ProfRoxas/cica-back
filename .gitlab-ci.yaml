@@ -5,4 +5,5 @@ stages:
 build:
   # image: docker:latest
   stage: build
-  script: ls -al
+  script:
+    - ls -al
