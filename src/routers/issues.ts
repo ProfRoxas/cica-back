@@ -2,23 +2,49 @@ import express, { Request, Response } from 'express';
 
 import { AppDataSource } from "../data-source";
 
-import { User } from "../entity/User"
 import { Issue } from '../entity/Issue';
+import IssueStates from '../consts/issuestates';
 
 const issuesRouter = express.Router()
 
 issuesRouter.route('/').get(async (req: Request, res: Response) => {
     const {name, user, state, limit, offset} = req.body
-    const users = await AppDataSource.getRepository(Issue).find()
-    res.json({count: users.length, results: users});
+    let query = await AppDataSource.getRepository(Issue).createQueryBuilder('issue')
+        .leftJoin('issue.owner', 'owner')
+        .addSelect(['owner.id', 'owner.username', 'owner.email'])
+    if (user === null){
+        query.andWhere('issue.owner is NULL')
+    }
+    console.log(req.body)
+    if (user || name || state || limit || offset) {
+        query.take(limit || 10).skip(offset || 0)
+        if (user) query.andWhere('issue.owner.id = :owner', {owner: user})
+        if (name) query.andWhere('issue.name = :name', {name: name})
+        if (state) {
+            const issueState = IssueStates[state.toUpperCase()]
+            if (issueState) query.andWhere('issue.state = :state', {state: issueState})
+        }
+    }
+    const issues = await query.getMany()
+    res.json({count: issues.length, results: issues});
 }).post(async (req: Request, res: Response) => {
-
+    const {name, description, user} = req.body
+    console.log(name)
+    if (!name) {
+        res.status(400).json({message: 'Missing requires parameter: name'})
+    } else {
+        const issue = await AppDataSource.getRepository(Issue).create({name, description, owner: user})
+        const result = await AppDataSource.getRepository(Issue).save(issue)
+        res.status(201).json(result)
+    }
 })
 issuesRouter.param('id', async (req: Request, res: Response, next, id:string) => {
-    const result = await AppDataSource.getRepository(Issue).findOneBy({
-        id: Number.parseInt(id),
-    })
-    console.log(result)
+    const result = await AppDataSource.getRepository(Issue).createQueryBuilder('issue')
+        .leftJoin('issue.owner', 'owner')
+        .addSelect(['owner.id', 'owner.username', 'owner.email'])
+        .where('issue.id = :id', {id: id})
+        .getOne()
+    console.log(result.owner)
     if (!result) {
         res.status(404).json({message: 'Issue not found'})
     } else {
