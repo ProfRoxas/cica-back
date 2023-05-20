@@ -34,28 +34,29 @@ usersRouter.get('/', async (req: Request, res: Response) => {
         results: users
     });
 });
-usersRouter.route('/:id').get(async (req: Request, res: Response) => {
+usersRouter.param('id', async (req:Request, res:Response, next, id:string)=>{
     const result = await AppDataSource.getRepository(User)
-    .createQueryBuilder('user')
-    .select([
-        'user.id',
-        'user.username',
-        'user.email',
-        'user.privilege',
-        'user.createdAt'
-    ]).leftJoinAndSelect('user.issues', 'issues')
-    .where('user.id = :id', {id: req.params.id}).getOne()
-    if (result) {
-        res.send(result);
-    } else {
-        res.status(404).json({message: `User with ID ${req.body.id} not found`})
+        .createQueryBuilder('user')
+        .select([
+            'user.id',
+            'user.username',
+            'user.email',
+            'user.privilege',
+            'user.createdAt'
+        ]).leftJoinAndSelect('user.issues', 'issues')
+        .where('user.id = :id', {id: id}).getOne()
+    if (!result) {
+        res.status(404).json({message: `User with ID ${id} not found`})
     }
+    else {
+        res.locals.result = result
+        next()
+    }
+}).route('/:id')
+.get(async (req: Request, res: Response) => {
+    res.send(res.locals.result);
 }).patch(async (req: Request, res: Response) => {
-    const user = await AppDataSource.getRepository(User).findOneBy({id: Number.parseInt(req.params.id)})
-    if (!user) {
-        res.status(404).json({message: `User with ID ${req.body.id} not found`})
-        return
-    }
+    const user = res.locals.result
     const loginUser: User = res.locals.user
     if (isAdmin(loginUser) || loginUser.id == user.id) {
         const {email, password, privileges} = req.body
@@ -96,11 +97,7 @@ usersRouter.route('/:id').get(async (req: Request, res: Response) => {
         res.status(403).json({message: 'Not enough privileges'})
     }
 }).delete(async (req: Request, res: Response) => {
-    const user = await AppDataSource.getRepository(User).findOneBy({id: Number.parseInt(req.params.id)})
-    if (!user) {
-        res.status(404).json({message: `User with ID ${req.body.id} not found`})
-        return
-    }
+    const user = res.locals.result
     const loginUser: User = res.locals.user
     if (isAdmin(loginUser) || loginUser.id == user.id) {
         if (user.username != req.body.username) {

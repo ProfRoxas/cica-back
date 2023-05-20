@@ -4,23 +4,33 @@ import { AppDataSource } from "../data-source";
 
 import { User } from "../entity/User"
 import { Issue } from '../entity/Issue';
+import { nextTick } from 'process';
 
 const issuesRouter = express.Router()
 
-issuesRouter.get('/', async (req: Request, res: Response) => {
+issuesRouter.route('/').get(async (req: Request, res: Response) => {
     const {name, user, state, limit, offset} = req.body
     const users = await AppDataSource.getRepository(Issue).find()
     res.json({count: users.length, results: users});
+}).post(async (req: Request, res: Response) => {
+
 })
-issuesRouter.get('/:id', async (req: Request, res: Response) => {
+issuesRouter.param('id', async (req: Request, res: Response, next, id:string) => {
     const result = await AppDataSource.getRepository(Issue).findOneBy({
-        id: Number.parseInt(req.params.id),
+        id: Number.parseInt(id),
     })
-    if (result) {
-        res.send(result);
-    } else {
+    console.log(result)
+    if (!result) {
         res.status(404).json({message: 'Issue not found'})
+    } else {
+        res.locals.issue = result
+        next()
     }
-});
+}).route('/:id').get(async (req: Request, res: Response) => {
+    
+}).post(async (req: Request, res:Response) => {
+
+    res.status(404).json({message: 'Issue not found'})
+})
 
 export {issuesRouter}
