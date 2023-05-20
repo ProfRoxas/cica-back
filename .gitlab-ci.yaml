@@ -3,6 +3,6 @@ stages:
   - deploy
 
 build:
-  image: docker:latest
+  # image: docker:latest
   stage: build
-  script: docker info
+  script: ls -al
