@@ -24,7 +24,9 @@ authRouter.post('/login', async (req: Request, res: Response) => {
             
             // 24 hours in milliseconds from now
             const date2 = new Date(Date.now()+(24*60*60*1000))
-            res.json({message: 'Login success', token: token, expires: date2})
+
+            const {id, username, email} = user
+            res.json({message: 'Login success', token: token, expires: date2, user: {id, username, email}})
         } else {
             res.status(404).json({message: 'Invalid Username or Password'})
         }
