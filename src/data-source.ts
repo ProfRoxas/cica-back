@@ -8,6 +8,6 @@ export const AppDataSource = new DataSource({
     database: "cica.db",
     logging: false,
     entities: [User, Issue],
-    migrations: ['./migration/*.js'],
+    migrations: ['./build/migration/*.js'],
     subscribers: [],
 })
