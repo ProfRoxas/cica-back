@@ -18,12 +18,12 @@ usersRouter.get('/', async (req: Request, res: Response) => {
         'user.privilege',
         'user.createdAt'
     ]).leftJoinAndSelect('user.issues', 'issues')
-    const {username, email, limit, offset} = req.body
+    const {username, email, limit, offset} = req.params
     if (email === null){
         query.andWhere('user.email is NULL')
     }
     if (username || email || limit || offset) {
-        query.take(limit || 10).skip(offset || 0)
+        query.take(Number.parseInt(limit) || 10).skip(Number.parseInt(offset) || 0)
         if (username) query.andWhere('user.username = :username', {username: username})
         if (email) query.andWhere('user.email = :email', {email: email})
     }
