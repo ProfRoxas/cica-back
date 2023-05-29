@@ -9,11 +9,12 @@ import { User } from '../entity/User';
 const issuesRouter = express.Router()
 
 issuesRouter.route('/').get(async (req: Request, res: Response) => {
-    const {name, user, state, limit, offset} = req.params
+    const {name, user, state, limit, offset}:any = req.query
+    console.log(req.query)
     let query = await AppDataSource.getRepository(Issue).createQueryBuilder('issue')
         .leftJoin('issue.owner', 'owner')
         .addSelect(['owner.id', 'owner.username', 'owner.email'])
-    if (user === null){
+    if (user !== undefined  && !user){
         query.andWhere('issue.owner is NULL')
     }
     if (user || name || state || limit || offset) {

@@ -18,7 +18,7 @@ usersRouter.get('/', async (req: Request, res: Response) => {
         'user.privilege',
         'user.createdAt'
     ]).leftJoinAndSelect('user.issues', 'issues')
-    const {username, email, limit, offset} = req.params
+    const {username, email, limit, offset}:any = req.query
     if (email === null){
         query.andWhere('user.email is NULL')
     }
