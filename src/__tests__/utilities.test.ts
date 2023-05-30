@@ -1,6 +1,10 @@
+import app from ".."
 import Privileges from "../consts/privileges"
+import { AppDataSource } from "../data-source"
 import { User } from "../entity/User"
-import { hashPassword, isAdmin } from "../utilities"
+import { hashPassword, isAdmin, generateToken } from "../utilities"
+
+import request from "supertest"
 
 describe("Password Hashing", () => {
     const password1 = "RandomPass"
@@ -40,4 +44,35 @@ describe("Admin check", () => {
         user.privilege = Privileges.OWNER
         expect(isAdmin(user)).toBe(true)
     })
+})
+
+describe("Authentication check Test", () => {
+    beforeAll(async () => {
+        await AppDataSource.initialize()
+    })
+    const token = generateToken("admin");
+    const server = request(app)
+
+    it("Missing Token", async () => {
+        const resp = await server.get("/users")
+        expect(resp.body).toEqual({message: "Missing Authorization Token"})
+        expect(resp.status).toBe(401)
+    })
+    it("Wrong Token text", async () => {
+        const resp = await server.get("/users").set({authorization: `Token ${token}`})
+        expect(resp.body).toEqual({message: "Missing Authorization Token"})
+        expect(resp.status).toBe(401)
+    })
+    it("Invalid Token", async () => {
+        const resp = await server.get("/users").set({authorization: `Bearer ${token}1`})
+        expect(resp.body).toEqual({message: "Invalid Authorization Token"})
+        expect(resp.status).toBe(403)
+    })
+    it("Accepted Token", async () => {
+        const resp = await server.get("/users").set({authorization: `Bearer ${token}`})
+        expect(resp.body).toHaveProperty("count")
+        expect(resp.body).toHaveProperty("results")
+        expect(resp.status).toBe(200)
+    })
+
 })
