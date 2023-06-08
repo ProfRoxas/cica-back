@@ -26,4 +26,6 @@ COPY ["entrypoint.sh", "package.json", "/app/"]
 
 RUN chmod a+x entrypoint.sh
 
+EXPOSE 4000
+
 ENTRYPOINT ["/app/entrypoint.sh" ]

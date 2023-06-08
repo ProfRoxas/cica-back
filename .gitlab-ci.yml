@@ -1,12 +1,21 @@
 stages:
+  - test
   - build
-  - deploy
 variables:
   DOCKER_DRIVER: overlay2
   DOCKER_TLS_CERTDIR: ""
-  
+
+test:
+  image: node
+  stage: test
+  script:
+    - npm install
+    - tsc
+    - npm run test
+
 build:
   image: docker:latest
   stage: build
   script:
-    - docker info
+    - docker build -t cica-back:latest
+    # - docker push
