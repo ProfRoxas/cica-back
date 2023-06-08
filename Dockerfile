@@ -5,7 +5,7 @@ WORKDIR /app
 COPY ["src", "package.json", "entrypoint.sh", "tsconfig.json", "/app/"]
 
 RUN mkdir /cache
-RUN --mount=type=cache,target=/cache npm install --cache /cache/
+RUN npm install --cache /cache/
 RUN npx tsc --build
 RUN chmod a+x entrypoint.sh
 
@@ -13,7 +13,7 @@ FROM node as installer
 WORKDIR /app
 COPY --from=builder ["/cache/", "/cache/"]
 COPY ["package.json", "/app/"]
-RUN --mount=type=cache,target=/cache npm install --prefer-offline --omit-dev --cache /cache/
+RUN npm install --prefer-offline --omit-dev --cache /cache/
 
 FROM node:slim as final
 ENV NODE_ENV=production
