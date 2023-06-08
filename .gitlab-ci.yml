@@ -10,7 +10,7 @@ test:
   stage: test
   script:
     - npm install
-    - tsc
+    - npx tsc
     - npm run test
 
 build:
