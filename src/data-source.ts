@@ -5,7 +5,7 @@ import { Issue } from "./entity/Issue"
 
 export const AppDataSource = new DataSource({
     type: "sqlite",
-    database: "cica.db",
+    database: "data/cica.db",
     logging: false,
     entities: [User, Issue],
     migrations: ['./build/migration/*.js'],
