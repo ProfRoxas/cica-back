@@ -48,6 +48,7 @@ describe("Admin check", () => {
 
 describe("Authentication check Test", () => {
     beforeAll(async () => {
+        AppDataSource.setOptions({database: ":memory:", synchronize: true})
         await AppDataSource.initialize()
     })
     const token = generateToken("admin");
@@ -69,6 +70,7 @@ describe("Authentication check Test", () => {
         expect(resp.status).toBe(403)
     })
     it("Accepted Token", async () => {
+        await AppDataSource.getRepository(User).save({username: "admin", password: "admin"})
         const resp = await server.get("/users").set({authorization: `Bearer ${token}`})
         expect(resp.body).toHaveProperty("count")
         expect(resp.body).toHaveProperty("results")
