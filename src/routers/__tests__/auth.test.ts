@@ -10,7 +10,7 @@ import request from "supertest"
 describe("Authentication Routes", () => {
     const username = "admin"
     const password = "admin"
-    const token = generateToken(username);
+    let token = '';
     const server = request(app)
     const hashpass = hashPassword(password)
     beforeAll(async () => {
@@ -19,6 +19,7 @@ describe("Authentication Routes", () => {
         
         await AppDataSource.getRepository(User).save({username: username, password: hashpass})
         // await AppDataSource.synchronize()
+        token = generateToken(username);
     })
 
     it("Register same name", async () => {
@@ -27,10 +28,12 @@ describe("Authentication Routes", () => {
         expect(resp.status).toBe(400)
     })
     it("Register new user", async () => {
-        const resp = await server.post("/auth/register").send({username: "second_user", password: password})
-        expect(resp.body).toEqual({message: "Registration Succeeded with ID 2"})
+        const newUsername = "second_user"
+        const resp = await server.post("/auth/register").send({username: newUsername, password: password})
+        const user = await AppDataSource.getRepository(User).findOneBy({username: newUsername, password: hashpass})
+        expect(user).toBeDefined()
+        expect(resp.body).toEqual({message: `Registration Succeeded with ID ${user.id}`})
         expect(resp.status).toBe(201)
-        const user = await AppDataSource.getRepository(User).findOneBy({username: username, password: hashpass})
         
     })
     it("User not found login", async () => {

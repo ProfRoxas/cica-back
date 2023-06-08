@@ -47,12 +47,13 @@ describe("Admin check", () => {
 })
 
 describe("Authentication check Test", () => {
+    const token = generateToken("admin");
+    const server = request(app)
     beforeAll(async () => {
         AppDataSource.setOptions({database: ":memory:", synchronize: true})
         await AppDataSource.initialize()
+        await AppDataSource.getRepository(User).save({username: "admin", password: "admin"})
     })
-    const token = generateToken("admin");
-    const server = request(app)
 
     it("Missing Token", async () => {
         const resp = await server.get("/users")
@@ -70,8 +71,7 @@ describe("Authentication check Test", () => {
         expect(resp.status).toBe(403)
     })
     it("Accepted Token", async () => {
-        await AppDataSource.getRepository(User).save({username: "admin", password: "admin"})
-        const resp = await server.get("/users").set({authorization: `Bearer ${token}`})
+        const resp = await server.get("/users").set({authorization: `Bearer ${generateToken("admin")}`})
         expect(resp.body).toHaveProperty("count")
         expect(resp.body).toHaveProperty("results")
         expect(resp.status).toBe(200)
