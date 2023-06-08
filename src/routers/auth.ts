@@ -37,8 +37,13 @@ authRouter.post('/register', async (req: Request, res: Response) => {
     if( username == undefined || password == undefined) {
         res.status(400).json({message: 'Missing username or password'})
     }
+    let user = await AppDataSource.getRepository(User).findOneBy({username: username})
+    if (user) {
+        res.status(400).json({message: "Username is already taken"})
+        return
+    }
     const password_hash = hashPassword(password)
-    const user = AppDataSource.getRepository(User).create({username, password: password_hash, email})
+    user = AppDataSource.getRepository(User).create({username, password: password_hash, email})
     
     try {
         const results = await AppDataSource.getRepository(User).save(user)
